@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "DoctaPánico",
+    "slug": "doctapanico",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logonuevo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/logonuevo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.herreramauro.DesitApp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "versionCode": 9,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.herreramauro.DesitAppCerrado"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fe285d99-7b07-4109-bd6c-5cd63844c7b1"
+      }
+    }
+  }
+}
