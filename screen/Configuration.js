@@ -11,7 +11,7 @@ import SaveButton from "../component/SaveButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function Configuration() {
-    const [codigo, setCodigo] = useState("");
+    const [cuenta, setCodigo] = useState("");
     const navigation = useNavigation();
     
 
@@ -19,12 +19,12 @@ function Configuration() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const storedValue = await AsyncStorage.getItem("API_URL");
+                const storedValue = await AsyncStorage.getItem("Cuenta");
                 if (storedValue) {
                     setCodigo(storedValue);
                 }
             } catch (error) {
-                console.error("Error al cargar el código:", error);
+                console.error("Error al cargar la cuenta:", error);
             }
         };
         loadData();
@@ -33,11 +33,11 @@ function Configuration() {
     // Guardar dato en AsyncStorage
     const saveData = async () => {
         try {
-            await AsyncStorage.setItem("API_URL", codigo);
-            console.log("Código guardado:", codigo);
+            await AsyncStorage.setItem("Cuenta", cuenta);
+            console.log("Cuenta guardada:", cuenta);
             navigation.replace('Principal');
         } catch (error) {
-            console.error("Error al guardar el código:", error);
+            console.error("Error al guardar su cuenta:", error);
         }
     };
     return (
@@ -52,10 +52,10 @@ function Configuration() {
                         <View style={styles.textContainer}>
                             <TextInput
                                 style={styles.textImput}
-                                placeholder="Ingrese su código"
+                                placeholder="Ingrese su número de cuenta"
                                 placeholderTextColor="#616060"
                                 onChangeText={setCodigo}
-                                value={codigo}
+                                value={cuenta}
                             />
                             <MaterialIcons name={"vpn-key"} size={24} color="#000" style={styles.icon} />
                         </View>
@@ -63,7 +63,7 @@ function Configuration() {
                 </View>
             </KeyboardAwareScrollView>
             <View style={styles.button}>
-                <SaveButton onPress={saveData} isEnabled={codigo.length > 0} />
+                <SaveButton onPress={saveData} isEnabled={cuenta.length > 0} />
             </View>
         </>
     );

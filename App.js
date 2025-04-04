@@ -109,7 +109,7 @@ export default function App() {
         await SplashScreen.preventAutoHideAsync();
         // Preload fonts or any other task
         await new Promise(resolve => setTimeout(resolve, 2000));
-        const data = await AsyncStorage.getItem("API_URL");
+        const data = await AsyncStorage.getItem("Cuenta");
         if (data !== null) {
           setIsAuthorized(true); // Usuario ya configurado
         }

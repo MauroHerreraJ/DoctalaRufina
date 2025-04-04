@@ -12,12 +12,12 @@ function GrabarBorrar() {
   const token = '1234'
 
   const Grabar = async () => {
-    await AsyncStorage.setItem("API_URL", JSON.stringify({ licencia, token }));
+    await AsyncStorage.setItem("Cuenta", JSON.stringify({ licencia, token }));
     console.log('grabado');
   };
 
   const Borrar = async () => {
-    await AsyncStorage.removeItem("API_URL");
+    await AsyncStorage.removeItem("Cuenta");
     console.log('borrado');
   };
 
