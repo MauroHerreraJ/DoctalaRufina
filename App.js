@@ -22,7 +22,7 @@ function AuthorizedNavigation() {
   return (
     <BottomTabs.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#0d47a1', height: 120 },
+        headerStyle: { backgroundColor: '#38a654', height: 120 },
         headerTintColor: "white",
       }}>
 
@@ -30,7 +30,7 @@ function AuthorizedNavigation() {
         name='Desit'
         component={AllButtons}
         options={{
-          title: "DoctaPánico",
+          title: "",
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
           <Ionicons name='home-outline' size={size} color={color} />
@@ -38,8 +38,8 @@ function AuthorizedNavigation() {
         
           headerLeft: () => (
             <Image
-              source={require("./assets/logonuevo.png")}
-              style={{ width: 40, height: 40, marginLeft: 110 }}
+              source={require("./assets/logorufina.png")}
+              style={{ width: 110, height: 110, marginLeft: 150 }}
             />
           ),
         }} />
@@ -135,8 +135,6 @@ export default function App() {
   return (
     <>
       <StatusBar style='light' />
-
-
       <NavigationContainer>
         <Stack.Navigator initialRouteName={isAuthorized ? "Principal" : "Secondary"}>
 
