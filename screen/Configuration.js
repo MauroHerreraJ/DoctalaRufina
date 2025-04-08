@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Dimensions } from "react-native";
-const { height, width } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 import SaveButton from "../component/SaveButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -13,7 +13,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 function Configuration() {
     const [cuenta, setCodigo] = useState("");
     const navigation = useNavigation();
-
 
     // Cargar el dato guardado al iniciar la pantalla
     useEffect(() => {
@@ -104,56 +103,4 @@ const styles = StyleSheet.create({
     icon: {
         marginRight: 10,
     },
-    containerActivity: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    button2: {
-        marginTop: 10,
-        width: 189,
-        height: 100,
-        marginLeft: 215,
-    },
-    buttonContainer1: {
-        marginTop: 10,
-        marginLeft: 150,
-        alignItems: "center",
-    },
-    button1: {
-        padding: 10,
-        width: "90%",
-        height: 45,
-        margin: 8,
-        borderRadius: 8,
-        overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
-        backgroundColor: '#009CDE',
-        elevation: 4,
-        shadowColor: 'black',
-        shadowOpacity: 0.25,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 8,
-        alignItems: "center",
-        opacity: 0.9
-    },
-    textButton: {
-        color: "white",
-        fontSize: 15,
-        width: "100%",
-        textAlign: "center",
-    },
-    iconContainer: {
-        flexDirection: "row",
-        alignItems: "stretch"
-    },
-    icon2: {
-        marginLeft: 10
-    },
-    title: {
-        marginTop: 10,
-        marginLeft: 21,
-    },
-    titleText: {
-        fontSize: 17,
-        fontFamily: "open-sans-bold",
-    }
 })

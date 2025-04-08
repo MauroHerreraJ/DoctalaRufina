@@ -7,8 +7,8 @@ import { Image } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AllButtons from './screen/AllButtons';
 import Configuration from './screen/Configuration';
 import User from './screen/User';
@@ -83,7 +83,7 @@ function NoAuthorizedNavigation() {
         }} />
     </BottomTabs.Navigator>
   );}
-  
+
 export default function App() {
 
   const [fontsLoaded] = useFonts({
