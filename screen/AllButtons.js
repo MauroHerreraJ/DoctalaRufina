@@ -59,7 +59,6 @@ const AllButtons = () => {
       console.error(error);
     }
   };
-
   return (
     <ImageBackground
       source={require('../assets/126353.jpg')}
@@ -86,9 +85,7 @@ const AllButtons = () => {
     </ImageBackground>
   );
 };
-
 export default AllButtons;
-
 const styles = StyleSheet.create({
   rootScreen: {
     flex: 1,

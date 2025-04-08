@@ -33,9 +33,8 @@ function AuthorizedNavigation() {
           title: "",
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
-          <Ionicons name='home-outline' size={size} color={color} />
-        ),
-        
+            <Ionicons name='home-outline' size={size} color={color} />
+          ),
           headerLeft: () => (
             <Image
               source={require("./assets/logorufina.png")}
@@ -50,12 +49,9 @@ function AuthorizedNavigation() {
         options={{
           title: "Sistema",
           tabBarIcon: ({ color, size }) => <Ionicons name='settings-outline' size={size} color={color} />
-
         }} />
-
     </BottomTabs.Navigator>
   );
-
 }
 
 function NoAuthorizedNavigation() {
@@ -65,9 +61,7 @@ function NoAuthorizedNavigation() {
       screenOptions={{
         headerStyle: { backgroundColor: '#0d47a1' },
         headerTintColor: "white",
-
       }}>
-
       <BottomTabs.Screen
         name="Welcome"
         component={welcome}
@@ -86,13 +80,10 @@ function NoAuthorizedNavigation() {
           tabBarStyle: { display: 'none' },
           title: "Configuración",
           tabBarIcon: ({ color, size }) => <Ionicons name='settings-outline' size={size} color={color} />
-
         }} />
-
     </BottomTabs.Navigator>
-  );
-}
-
+  );}
+  
 export default function App() {
 
   const [fontsLoaded] = useFonts({
@@ -148,15 +139,15 @@ export default function App() {
             component={AuthorizedNavigation}
             options={{ headerShown: false }}
           />
-           <Stack.Screen
-                name="GrabarBorrar"
-                component={GrabarBorrar}
-                options={{
-                  title: "Borrar",
-                  headerStyle: { backgroundColor: '#0d47a1' },
-                  headerTintColor: "white",
-                }}
-              />
+          <Stack.Screen
+            name="GrabarBorrar"
+            component={GrabarBorrar}
+            options={{
+              title: "Borrar",
+              headerStyle: { backgroundColor: '#0d47a1' },
+              headerTintColor: "white",
+            }}
+          />
           <Stack.Screen
             name='Welcome'
             component={welcome}

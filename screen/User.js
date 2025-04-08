@@ -23,13 +23,13 @@ function User({ navigation }) {
         setCuenta("Error al cargar la cuenta");
       }
     };
-  
+
     loadCuenta();
   }, []);
-  
+
   const openClaveModal = () => {
     setIsModalVisible(true); // Mostrar modal para ingresar la clave
-  };  
+  };
   const closeClaveModal = () => {
     setIsModalVisible(false); // Cerrar modal
   };
@@ -54,9 +54,9 @@ function User({ navigation }) {
           style={{ width: 59, height: 59 }} />
       </View>
       <TouchableOpacity style={styles.buttonUpdate} onPress={openClaveModal}>
-          <Text style={styles.textImage}>Producto desarrollado por Desit SA</Text>
-        </TouchableOpacity>
-        <ClaveModal
+        <Text style={styles.textImage}>Producto desarrollado por Desit SA</Text>
+      </TouchableOpacity>
+      <ClaveModal
         visible={isModalVisible}
         onClose={closeClaveModal}
         onSubmit={handleClaveSubmit}
