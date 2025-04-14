@@ -47,7 +47,7 @@ function User({ navigation }) {
     <>
       <View style={styles.container}>
         <Text style={styles.label}>Número de cuenta:</Text>
-        <Text style={styles.url}>{cuenta}</Text>
+        <Text style={styles.url}numberOfLines={0} adjustsFontSizeToFit={true}>{cuenta}</Text>
       </View>
       <View style={styles.imageContainer}>
         <Image source={require("../assets/logonuevo.png")}
@@ -98,10 +98,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
+    textAlign:"center",
+    paddingBottom:1,
+    width: '100%'
   },
   url: {
     fontSize: 16,
-    color: "bold",
+    fontWeight: "bold",  
     textAlign: "center",
+    color: "#000",        
+    paddingHorizontal: 20, 
+    width:"100%"
   },
 });

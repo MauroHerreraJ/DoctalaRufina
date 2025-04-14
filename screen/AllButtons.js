@@ -79,7 +79,6 @@ const AllButtons = () => {
                   Alert.alert('SMS enviado correctamente');
                   BackHandler.exitApp(); // Opcional
                 } else {
-                  Alert.alert('No se pudo enviar el SMS');
                 }
               },
             },

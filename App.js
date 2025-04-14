@@ -7,6 +7,7 @@ import { Image } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { Dimensions } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AllButtons from './screen/AllButtons';
@@ -19,11 +20,13 @@ const Stack = createNativeStackNavigator();
 const BottomTabs = createBottomTabNavigator();
 
 function AuthorizedNavigation() {
+  const screenWidth = Dimensions.get('window').width;
   return (
     <BottomTabs.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#38a654', height: 120 },
+        headerStyle: { backgroundColor: '#38a654', height: 135 },
         headerTintColor: "white",
+        tabBarLabelStyle: { fontSize: 13, width: '100%', paddingBottom: 1 }
       }}>
 
       <BottomTabs.Screen
@@ -38,10 +41,16 @@ function AuthorizedNavigation() {
           headerLeft: () => (
             <Image
               source={require("./assets/logorufina.png")}
-              style={{ width: 110, height: 110, marginLeft: 150 }}
+              style={{
+                width: screenWidth * 0.8,     // 30% del ancho de pantalla
+                height: screenWidth * 0.3,    // altura proporcional
+                marginLeft: screenWidth * 0.1 // margen adaptable
+              }}
+              resizeMode="contain"
             />
           ),
         }} />
+
 
       <BottomTabs.Screen
         name="User"
