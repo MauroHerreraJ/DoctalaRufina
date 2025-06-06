@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://desit-larufina.selfip.com:45080/panic"; // 🔹 Parte fija de la URL
+const API_URL = "https://desit-larufina.selfip.com:5001/panic"; // 🔹 Parte fija de la URL
 
 export const savePost = async (data) => {
   try {
