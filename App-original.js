@@ -8,9 +8,8 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AllButtons from './screen/AllButtons';
 import Configuration from './screen/Configuration';
 import User from './screen/User';
@@ -22,32 +21,10 @@ const BottomTabs = createBottomTabNavigator();
 
 function AuthorizedNavigation() {
   const screenWidth = Dimensions.get('window').width;
-  const [logoUrl, setLogoUrl] = useState(null);
-  const [primaryColor, setPrimaryColor] = useState('#38a654');
-
-  useEffect(() => {
-    const loadNeighborhoodConfig = async () => {
-      try {
-        const storedLogoUrl = await AsyncStorage.getItem("logoUrl");
-        const storedPrimaryColor = await AsyncStorage.getItem("primaryColor");
-        
-        if (storedLogoUrl) {
-          setLogoUrl(storedLogoUrl);
-        }
-        if (storedPrimaryColor) {
-          setPrimaryColor(storedPrimaryColor);
-        }
-      } catch (error) {
-        console.error("Error al cargar configuración del barrio:", error);
-      }
-    };
-    loadNeighborhoodConfig();
-  }, []);
-
   return (
     <BottomTabs.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: primaryColor, height: 135 },
+        headerStyle: { backgroundColor: '#38a654', height: 135 },
         headerTintColor: "white",
         tabBarLabelStyle: { fontSize: 13, width: '100%', paddingBottom: 1 }
       }}>
@@ -63,7 +40,7 @@ function AuthorizedNavigation() {
           ),
           headerLeft: () => (
             <Image
-              source={logoUrl ? { uri: logoUrl } : require("./assets/logorufina.png")}
+              source={require("./assets/logorufina.png")}
               style={{
                 width: screenWidth * 0.8,     // 30% del ancho de pantalla
                 height: screenWidth * 0.3,    // altura proporcional
@@ -156,7 +133,7 @@ export default function App() {
     return null; // or a custom loading component
   }
   return (
-    <KeyboardProvider>
+    <>
       <StatusBar style='light' />
       <NavigationContainer>
         <Stack.Navigator initialRouteName={isAuthorized ? "Principal" : "Secondary"}>
@@ -204,6 +181,7 @@ export default function App() {
           />
         </Stack.Navigator>
       </NavigationContainer>
-    </KeyboardProvider>
+
+    </>
   );
 }

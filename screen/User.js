@@ -6,25 +6,36 @@ import ClaveModal from "../UI/ClaveModal";
 
 function User({ navigation }) {
   const [cuenta, setCuenta] = useState("");
+  const [nombreBarrio, setNombreBarrio] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isBorrarAccess, setIsBorrarAccess] = useState(false);
 
   useEffect(() => {
-    const loadCuenta = async () => {
+    const loadData = async () => {
       try {
-        const storedCuenta = await AsyncStorage.getItem("Cuenta");
+        // Cargar número de cuenta
+        const storedCuenta = await AsyncStorage.getItem("NumeroCuenta") || await AsyncStorage.getItem("Cuenta");
         if (storedCuenta) {
           setCuenta(storedCuenta);
         } else {
           setCuenta("No hay una cuenta guardada");
         }
+
+        // Cargar nombre del barrio
+        const storedNombreBarrio = await AsyncStorage.getItem("neighborhoodName");
+        if (storedNombreBarrio) {
+          setNombreBarrio(storedNombreBarrio);
+        } else {
+          setNombreBarrio("No hay barrio configurado");
+        }
       } catch (error) {
-        console.error("Error al obtener la cuenta:", error);
+        console.error("Error al obtener los datos:", error);
         setCuenta("Error al cargar la cuenta");
+        setNombreBarrio("Error al cargar el barrio");
       }
     };
 
-    loadCuenta();
+    loadData();
   }, []);
 
   const openClaveModal = () => {
@@ -46,8 +57,11 @@ function User({ navigation }) {
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.label}>Número de cuenta:</Text>
-        <Text style={styles.url}numberOfLines={0} adjustsFontSizeToFit={true}>{cuenta}</Text>
+        <Text style={styles.label}>Barrio:</Text>
+        <Text style={styles.neighborhoodName} numberOfLines={2} adjustsFontSizeToFit={true}>{nombreBarrio}</Text>
+        
+        <Text style={[styles.label, { marginTop: 20 }]}>Número de cuenta:</Text>
+        <Text style={styles.url} numberOfLines={0} adjustsFontSizeToFit={true}>{cuenta}</Text>
       </View>
       <View style={styles.imageContainer}>
         <Image source={require("../assets/logonuevo.png")}
@@ -102,11 +116,20 @@ const styles = StyleSheet.create({
     paddingBottom:1,
     width: '100%'
   },
+  neighborhoodName: {
+    fontSize: 20,
+    fontWeight: "bold",  
+    textAlign: "center",
+    color: "#1E88E5",
+    paddingHorizontal: 20, 
+    width:"100%",
+    marginBottom: 10,
+  },
   url: {
     fontSize: 16,
     fontWeight: "bold",  
     textAlign: "center",
-    color: "#000",        
+    color: "#1E88E5",        
     paddingHorizontal: 20, 
     width:"100%"
   },

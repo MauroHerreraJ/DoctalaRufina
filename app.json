@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "DoctaLaRufina",
+    "name": "Docta Pánico",
     "slug": "doctapanico",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/logonuevo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/logonuevo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff",
+      "hideExponentText": true
     },
     "ios": {
       "supportsTablet": true,
@@ -19,9 +20,16 @@
       }
     },
     "android": {
-      "versionCode": 9,
+      "versionCode": 10,
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "cover",
         "backgroundColor": "#ffffff"
       },
       "package": "com.herreramauro.DesitAppCerrado"
