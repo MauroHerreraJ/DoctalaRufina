@@ -2,18 +2,10 @@ import axios from "axios";
 import { Platform } from "react-native";
 
 // 🔹 URLs para desarrollo y producción
+const DEVELOP_URL = "https://desit-server-staging-a51a84ceec47.herokuapp.com";
+
 const getBaseUrl = () => {
-  if (__DEV__) {
-    // En desarrollo
-    if (Platform.OS === 'android') {
-      // return "http://10.0.2.2:3000"; // Para emulador Android
-      return "http://192.168.1.127:3000"; // Para dispositivo físico (tu IP local)
-    } else {
-      return "http://localhost:3000"; // Para iOS
-    }
-  }
-  // En producción, usa tu URL de Heroku
-  return "https://desit-server-staging.herokuapp.com"; // o tu URL de prod
+  return DEVELOP_URL;
 };
 
 // 🔹 Endpoints de la API del Neighborhood

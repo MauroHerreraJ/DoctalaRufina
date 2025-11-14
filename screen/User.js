@@ -7,6 +7,7 @@ import ClaveModal from "../UI/ClaveModal";
 function User({ navigation }) {
   const [cuenta, setCuenta] = useState("");
   const [nombreBarrio, setNombreBarrio] = useState("");
+  const [nombreCompleto, setNombreCompleto] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isBorrarAccess, setIsBorrarAccess] = useState(false);
 
@@ -28,10 +29,18 @@ function User({ navigation }) {
         } else {
           setNombreBarrio("No hay barrio configurado");
         }
+
+        const storedFullName = await AsyncStorage.getItem("fullName");
+        if (storedFullName) {
+          setNombreCompleto(storedFullName);
+        } else {
+          setNombreCompleto("No hay datos personales cargados");
+        }
       } catch (error) {
         console.error("Error al obtener los datos:", error);
         setCuenta("Error al cargar la cuenta");
         setNombreBarrio("Error al cargar el barrio");
+        setNombreCompleto("Error al cargar datos personales");
       }
     };
 
@@ -57,11 +66,22 @@ function User({ navigation }) {
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.label}>Barrio:</Text>
-        <Text style={styles.neighborhoodName} numberOfLines={2} adjustsFontSizeToFit={true}>{nombreBarrio}</Text>
-        
-        <Text style={[styles.label, { marginTop: 20 }]}>Número de cuenta:</Text>
-        <Text style={styles.url} numberOfLines={0} adjustsFontSizeToFit={true}>{cuenta}</Text>
+        <Text style={styles.screenTitle}>Datos de tu licencia</Text>
+
+        <View style={styles.infoCard}>
+          <Text style={styles.label}>Barrio</Text>
+          <Text style={styles.infoValue} numberOfLines={2} adjustsFontSizeToFit>{nombreBarrio}</Text>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.label}>Nombre y apellido</Text>
+          <Text style={styles.infoValue} numberOfLines={3} adjustsFontSizeToFit>{nombreCompleto}</Text>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.label}>Número de cuenta</Text>
+          <Text style={styles.infoValue} numberOfLines={2} adjustsFontSizeToFit>{cuenta}</Text>
+        </View>
       </View>
       <View style={styles.imageContainer}>
         <Image source={require("../assets/logonuevo.png")}
@@ -104,33 +124,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
+    alignItems: "stretch",
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 16,
     backgroundColor: "#f4f4f4",
   },
+  screenTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#120438",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  infoCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+    gap: 12,
+  },
   label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#120438",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  infoValue: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
-    textAlign:"center",
-    paddingBottom:1,
-    width: '100%'
-  },
-  neighborhoodName: {
-    fontSize: 20,
-    fontWeight: "bold",  
-    textAlign: "center",
     color: "#1E88E5",
-    paddingHorizontal: 20, 
-    width:"100%",
-    marginBottom: 10,
   },
-  url: {
-    fontSize: 16,
-    fontWeight: "bold",  
-    textAlign: "center",
-    color: "#1E88E5",        
-    paddingHorizontal: 20, 
-    width:"100%"
+  divider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 4,
   },
 });

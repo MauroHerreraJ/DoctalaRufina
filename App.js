@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from "@expo/vector-icons"
-import { Image } from 'react-native';
+import { Image, View, Platform, StatusBar as RNStatusBar } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import AllButtons from './screen/AllButtons';
 import Configuration from './screen/Configuration';
+import ConfigurationPersonal from './screen/ConfigurationPersonal';
 import User from './screen/User';
 import Welcome from './screen/Welcome';
 import GrabarBorrar from './component/GrabarBorrar';
@@ -24,6 +25,7 @@ function AuthorizedNavigation() {
   const screenWidth = Dimensions.get('window').width;
   const [logoUrl, setLogoUrl] = useState(null);
   const [primaryColor, setPrimaryColor] = useState('#38a654');
+  const [logoAspectRatio, setLogoAspectRatio] = useState(3);
 
   useEffect(() => {
     const loadNeighborhoodConfig = async () => {
@@ -44,12 +46,45 @@ function AuthorizedNavigation() {
     loadNeighborhoodConfig();
   }, []);
 
+  useEffect(() => {
+    // Determinar el aspect ratio del logo (ancho / alto) para mantener proporción
+    if (logoUrl) {
+      Image.getSize(
+        logoUrl,
+        (width, height) => {
+          if (width && height) {
+            setLogoAspectRatio(width / height);
+          }
+        },
+        (error) => {
+          console.warn("No se pudo obtener el tamaño del logo remoto:", error);
+        }
+      );
+    } else {
+      const fallbackAsset = Image.resolveAssetSource(require("./assets/logorufina.png"));
+      if (fallbackAsset?.width && fallbackAsset?.height) {
+        setLogoAspectRatio(fallbackAsset.width / fallbackAsset.height);
+      }
+    }
+  }, [logoUrl]);
+
+  const scaleFactor = 1.44;
+  const baseMaxLogoHeight = Math.min(screenWidth * 0.18, 56);
+  const maxLogoHeight = baseMaxLogoHeight * scaleFactor;
+  const maxLogoWidth = screenWidth * 0.6;
+  const widthFromHeight = maxLogoHeight * logoAspectRatio;
+  const adjustedWidth = Math.min(widthFromHeight, maxLogoWidth);
+  const adjustedHeight = adjustedWidth / (logoAspectRatio || 1);
+  const sideSpacer = Math.min(screenWidth * 0.12, 48);
+
   return (
     <BottomTabs.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: primaryColor, height: 135 },
         headerTintColor: "white",
-        tabBarLabelStyle: { fontSize: 13, width: '100%', paddingBottom: 1 }
+        tabBarLabelStyle: { fontSize: 13, width: '100%', paddingBottom: 1 },
+        headerTitleAlign: 'center',
+        headerTitleContainerStyle: { flex: 1, alignItems: 'center' },
       }}>
 
       <BottomTabs.Screen
@@ -61,17 +96,20 @@ function AuthorizedNavigation() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name='home-outline' size={size} color={color} />
           ),
-          headerLeft: () => (
-            <Image
-              source={logoUrl ? { uri: logoUrl } : require("./assets/logorufina.png")}
-              style={{
-                width: screenWidth * 0.8,     // 30% del ancho de pantalla
-                height: screenWidth * 0.3,    // altura proporcional
-                marginLeft: screenWidth * 0.1 // margen adaptable
-              }}
-              resizeMode="contain"
-            />
+          headerTitle: () => (
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <Image
+                source={logoUrl ? { uri: logoUrl } : require("./assets/logorufina.png")}
+                style={{
+                  height: adjustedHeight,
+                  width: adjustedWidth,
+                }}
+                resizeMode="contain"
+              />
+            </View>
           ),
+          headerLeft: () => <View style={{ width: sideSpacer }} />,
+          headerRight: () => <View style={{ width: sideSpacer }} />,
         }} />
 
 
@@ -197,6 +235,13 @@ export default function App() {
           <Stack.Screen
             name="Configuration"
             component={Configuration}
+          />
+          <Stack.Screen
+            name="ConfigurationPersonal"
+            component={ConfigurationPersonal}
+            options={{
+              headerShown: false,
+            }}
           />
           <Stack.Screen
             name="Home"
