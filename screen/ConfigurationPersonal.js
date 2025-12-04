@@ -2,7 +2,7 @@ import { View, TextInput, Text, Alert, ActivityIndicator, StyleSheet, Dimensions
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState, useEffect } from "react";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { KeyboardAwareScrollView, KeyboardStickyView } from "react-native-keyboard-controller";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import SaveButton from "../component/SaveButton";
@@ -69,6 +69,30 @@ function ConfigurationPersonal() {
           await AsyncStorage.setItem("backgroundColor", response.data.neighborhood.backgroundColor);
         }
 
+        // Guardar código de licencia si viene en la respuesta
+        const licenseCode = response.data.licenseCode || response.data.code || response.data.license?.code;
+        if (licenseCode) {
+          await AsyncStorage.setItem("licenseCode", licenseCode);
+          console.log("✅ Código de licencia guardado:", licenseCode);
+        } else {
+          console.warn("⚠️ No se encontró el código de licencia en la respuesta del servidor");
+        }
+
+        // Guardar número de teléfono del barrio (verificar diferentes posibles nombres de campo)
+        const phoneNumber = response.data.neighborhood.smsPhoneNumber || 
+                           response.data.neighborhood.phoneNumber || 
+                           response.data.neighborhood.phone || 
+                           response.data.neighborhood.telefono ||
+                           response.data.neighborhood.phone_number;
+        
+        if (phoneNumber) {
+          await AsyncStorage.setItem("neighborhoodPhoneNumber", phoneNumber);
+          console.log("✅ Número de teléfono del barrio guardado:", phoneNumber);
+        } else {
+          console.warn("⚠️ No se encontró el número de teléfono del barrio en la respuesta del servidor");
+          console.log("📋 Estructura de neighborhood recibida:", JSON.stringify(response.data.neighborhood, null, 2));
+        }
+
         await AsyncStorage.setItem("fullName", fullName.trim());
         await AsyncStorage.setItem("propertyReference", propertyReference);
         await AsyncStorage.setItem("phoneNumber", phoneNumber.trim());
@@ -110,7 +134,11 @@ function ConfigurationPersonal() {
     <>
       <SafeAreaView edges={["top"]} style={styles.headerSafeArea}>
         <View style={styles.headerContainer}>
+          <TouchableOpacity style={styles.headerBackButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.headerBackButtonText}>← Volver</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Datos personales</Text>
+          <View style={styles.headerSpacer} />
         </View>
       </SafeAreaView>
       <KeyboardAwareScrollView>
@@ -158,26 +186,25 @@ function ConfigurationPersonal() {
               keyboardType="phone-pad"
             />
           </View>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>← Volver</Text>
-          </TouchableOpacity>
         </View>
       </KeyboardAwareScrollView>
-      <View style={styles.buttonContainer}>
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#0d47a1" />
-        ) : (
-          <SaveButton
-            onPress={savePersonalData}
-            isEnabled={
-              fullName.trim().length > 0 &&
-              manzana.trim().length > 0 &&
-              lote.trim().length > 0 &&
-              phoneNumber.trim().length > 0
-            }
-          />
-        )}
-      </View>
+      <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
+        <View style={styles.button}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#0d47a1" />
+          ) : (
+            <SaveButton
+              onPress={savePersonalData}
+              isEnabled={
+                fullName.trim().length > 0 &&
+                manzana.trim().length > 0 &&
+                lote.trim().length > 0 &&
+                phoneNumber.trim().length > 0
+              }
+            />
+          )}
+        </View>
+      </KeyboardStickyView>
     </>
   );
 }
@@ -191,13 +218,32 @@ const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: "#0d47a1",
     paddingVertical: 18,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+  },
+  headerBackButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "#ffffff",
+  },
+  headerBackButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   headerTitle: {
     color: "#ffffff",
     fontSize: 20,
     fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+  },
+  headerSpacer: {
+    width: 80,
   },
   content: {
     paddingHorizontal: 20,
@@ -231,24 +277,10 @@ const styles = StyleSheet.create({
   rowFieldLeft: {
     marginRight: 12,
   },
-  buttonContainer: {
+  button: {
     marginTop: 10,
     marginBottom: height * 0.05,
     alignItems: "center",
-  },
-  backButton: {
-    marginTop: 20,
-    alignSelf: "flex-start",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: "#0d47a1",
-  },
-  backButtonText: {
-    color: "#0d47a1",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });
 

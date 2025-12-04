@@ -1,8 +1,9 @@
-import { View, StyleSheet, ImageBackground, Vibration, TouchableOpacity, Image, Animated, BackHandler, Dimensions } from "react-native";
+import { View, StyleSheet, ImageBackground, Vibration, TouchableOpacity, Image, Animated, BackHandler, Dimensions, Platform } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Importar AsyncStorage
 import * as SMS from 'expo-sms';
 import { Alert } from 'react-native';
+import * as Linking from 'expo-linking';
 import { sendPanicEvent } from "../util/Api";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -62,10 +63,22 @@ const AllButtons = () => {
     const accessToken = await AsyncStorage.getItem("accessToken");
     const numeroCuenta = await AsyncStorage.getItem("NumeroCuenta");
     const codigoBarrio = await AsyncStorage.getItem("CodigoBarrio");
+    // Obtener el número de teléfono del barrio desde AsyncStorage
+    const numeroDestino = await AsyncStorage.getItem("neighborhoodPhoneNumber");
   
     console.log("🚨 Iniciando envío de evento de pánico...");
     console.log("📋 Cuenta:", numeroCuenta);
     console.log("🏘️ Barrio:", codigoBarrio);
+    console.log("📞 Número destino SMS:", numeroDestino || "No configurado");
+    
+    // Debug: Verificar todos los valores guardados relacionados con teléfono
+    const allPhoneKeys = await AsyncStorage.multiGet([
+      "neighborhoodPhoneNumber",
+      "phoneNumber",
+      "CodigoBarrio",
+      "NumeroCuenta"
+    ]);
+    console.log("🔍 Valores guardados en AsyncStorage:", allPhoneKeys);
   
     // Verificar que la app esté configurada
     if (!accessToken || !numeroCuenta) {
@@ -88,14 +101,47 @@ const AllButtons = () => {
       });
       
       console.log("🎉 Evento enviado correctamente:", result);
-      // Cerrar la app inmediatamente sin mostrar alerta
-      BackHandler.exitApp();
+      // Minimizar/cerrar la app inmediatamente sin mostrar alerta
+      // Esto es importante para seguridad: ocultar la app del atacante
+      if (Platform.OS === 'android') {
+        BackHandler.exitApp();
+      } else {
+        // En iOS, intentar minimizar la app inmediatamente
+        // Múltiples intentos para asegurar que se minimice
+        try {
+          // Método más efectivo: abrir Settings (minimiza la app actual)
+          Linking.openURL('app-settings:').catch(() => {
+            // Fallback 1: Intentar abrir tel: (abre el marcador, minimiza la app)
+            setTimeout(() => {
+              Linking.openURL('tel:').catch(() => {
+                // Fallback 2: Intentar abrir mailto: (abre Mail, minimiza la app)
+                setTimeout(() => {
+                  Linking.openURL('mailto:').catch(() => {
+                    console.log("iOS: No se pudo minimizar la app automáticamente");
+                  });
+                }, 50);
+              });
+            }, 100);
+          });
+        } catch (error) {
+          console.log("iOS: Error al intentar minimizar la app:", error);
+        }
+      }
   
     } catch (error) {
       console.error("❌ Error al enviar evento:", error);
     
+      // Verificar si existe el número de teléfono del barrio
+      if (!numeroDestino) {
+        Alert.alert(
+          '❌ Error de Configuración',
+          'No se pudo enviar el evento por Internet y no se encontró el número de teléfono del barrio configurado.\n\nPor favor, contacta al administrador del barrio para configurar el número de teléfono.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    
       // Fallback: SMS
-      const numeroDestino = '3512260271';
       const mensaje = `EVT;${numeroCuenta};107;0`;
     
       const isAvailable = await SMS.isAvailableAsync();
@@ -114,8 +160,28 @@ const AllButtons = () => {
               onPress: async () => {
                 const { result } = await SMS.sendSMSAsync([numeroDestino], mensaje);
                 if (result === 'sent') {
-                  Alert.alert('SMS enviado correctamente');
-                  BackHandler.exitApp();
+                  // No mostrar alerta para no alertar al atacante
+                  // Minimizar la app inmediatamente
+                  if (Platform.OS === 'android') {
+                    BackHandler.exitApp();
+                  } else {
+                    // En iOS, intentar minimizar la app inmediatamente
+                    try {
+                      Linking.openURL('app-settings:').catch(() => {
+                        setTimeout(() => {
+                          Linking.openURL('tel:').catch(() => {
+                            setTimeout(() => {
+                              Linking.openURL('mailto:').catch(() => {
+                                console.log("iOS: No se pudo minimizar la app automáticamente");
+                              });
+                            }, 50);
+                          });
+                        }, 100);
+                      });
+                    } catch (error) {
+                      console.log("iOS: Error al intentar minimizar la app:", error);
+                    }
+                  }
                 }
               },
             },
