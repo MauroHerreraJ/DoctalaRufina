@@ -6,7 +6,7 @@ import { KeyboardAwareScrollView, KeyboardStickyView } from "react-native-keyboa
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import SaveButton from "../component/SaveButton";
-import { registerNeighborhood } from "../util/Api";
+import { registerNeighborhood, getLicenseByToken } from "../util/Api";
 
 const { height } = Dimensions.get("window");
 
@@ -54,12 +54,23 @@ function ConfigurationPersonal() {
       });
 
       if (response.status === "success" && response.data) {
+        // 🔍 LOG TEMPORAL: Mostrar respuesta completa del servidor
+        console.log("═══════════════════════════════════════════════════════");
+        console.log("📥 RESPUESTA COMPLETA DEL SERVIDOR AL CREAR LICENCIA:");
+        console.log("═══════════════════════════════════════════════════════");
+        console.log(JSON.stringify(response.data, null, 2));
+        console.log("═══════════════════════════════════════════════════════");
+        
+        // Guardar tokens
         await AsyncStorage.setItem("accessToken", response.data.accessToken);
         await AsyncStorage.setItem("refreshToken", response.data.refreshToken);
 
+        // Guardar datos básicos
         await AsyncStorage.setItem("CodigoBarrio", codigoBarrio);
         await AsyncStorage.setItem("NumeroCuenta", numeroCuenta);
         await AsyncStorage.setItem("Cuenta", numeroCuenta);
+        
+        // Guardar configuración del barrio
         await AsyncStorage.setItem("neighborhoodName", response.data.neighborhood.name);
         await AsyncStorage.setItem("logoUrl", response.data.neighborhood.logoUrl);
         await AsyncStorage.setItem("primaryColor", response.data.neighborhood.primaryColor);
@@ -69,16 +80,39 @@ function ConfigurationPersonal() {
           await AsyncStorage.setItem("backgroundColor", response.data.neighborhood.backgroundColor);
         }
 
-        // Guardar código de licencia si viene en la respuesta
-        const licenseCode = response.data.licenseCode || response.data.code || response.data.license?.code;
+        // Buscar código de licencia en la respuesta
+        let licenseCode = null;
+        
+        if (response.data.licenseCreated?.code) {
+          licenseCode = response.data.licenseCreated.code;
+        } else if (response.data.licenseCode) {
+          licenseCode = response.data.licenseCode;
+        } else if (response.data.code) {
+          licenseCode = response.data.code;
+        } else if (response.data.license?.code) {
+          licenseCode = response.data.license.code;
+        } else if (response.data.data?.licenseCode) {
+          licenseCode = response.data.data.licenseCode;
+        } else if (response.data.data?.code) {
+          licenseCode = response.data.data.code;
+        } else if (response.data.license && typeof response.data.license === 'object') {
+          licenseCode = response.data.license.code || response.data.license.licenseCode || response.data.license.id;
+        }
+        
+        // Guardar el código de licencia si se encontró
         if (licenseCode) {
           await AsyncStorage.setItem("licenseCode", licenseCode);
           console.log("✅ Código de licencia guardado:", licenseCode);
         } else {
-          console.warn("⚠️ No se encontró el código de licencia en la respuesta del servidor");
+          console.error("❌ No se encontró el código de licencia en la respuesta del servidor");
+          Alert.alert(
+            "⚠️ Error al guardar código de licencia",
+            "No se pudo obtener el código de licencia del servidor. La aplicación puede no funcionar correctamente al reiniciar.",
+            [{ text: "OK" }]
+          );
         }
 
-        // Guardar número de teléfono del barrio (verificar diferentes posibles nombres de campo)
+        // Guardar número de teléfono del barrio
         const phoneNumber = response.data.neighborhood.smsPhoneNumber || 
                            response.data.neighborhood.phoneNumber || 
                            response.data.neighborhood.phone || 
@@ -87,17 +121,11 @@ function ConfigurationPersonal() {
         
         if (phoneNumber) {
           await AsyncStorage.setItem("neighborhoodPhoneNumber", phoneNumber);
-          console.log("✅ Número de teléfono del barrio guardado:", phoneNumber);
-        } else {
-          console.warn("⚠️ No se encontró el número de teléfono del barrio en la respuesta del servidor");
-          console.log("📋 Estructura de neighborhood recibida:", JSON.stringify(response.data.neighborhood, null, 2));
         }
 
         await AsyncStorage.setItem("fullName", fullName.trim());
         await AsyncStorage.setItem("propertyReference", propertyReference);
         await AsyncStorage.setItem("phoneNumber", phoneNumber.trim());
-
-        console.log("Datos personales guardados correctamente");
         Alert.alert(
           "Datos guardados",
           `¡Bienvenido/a ${fullName.trim()}!`,

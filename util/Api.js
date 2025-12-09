@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // 🔹 URLs para desarrollo y producción
 const DEVELOP_URL = "https://desit-server-staging-a51a84ceec47.herokuapp.com";
@@ -14,6 +15,7 @@ const PANIC_EVENT_URL = `${getBaseUrl()}/api/v1/neighborhood-event`;
 const NEIGHBORHOOD_CONFIG_URL = `${getBaseUrl()}/api/v1/neighborhood/config`;
 const VALIDATE_ACCOUNT_URL = `${getBaseUrl()}/api/v1/neighborhood-account-number/check-availability`;
 const LICENSE_STATUS_URL = `${getBaseUrl()}/api/v1/neighborhood-license/code`;
+const GET_LICENSE_BY_TOKEN_URL = `${getBaseUrl()}/api/v1/neighborhood-license/me`;
 
 // 🔹 API FUNCTIONS
 
@@ -23,26 +25,9 @@ const LICENSE_STATUS_URL = `${getBaseUrl()}/api/v1/neighborhood-license/code`;
  */
 export const getNeighborhoodConfig = async (neighborhoodCode) => {
   try {
-    console.log("📡 Llamando a:", `${NEIGHBORHOOD_CONFIG_URL}/${neighborhoodCode}`);
     const response = await axios.get(`${NEIGHBORHOOD_CONFIG_URL}/${neighborhoodCode}`);
-    
-    // Log completo de la respuesta para debugging
-    console.log("📥 Respuesta completa del servidor:", JSON.stringify(response.data, null, 2));
-    
-    // Verificar estructura de la respuesta
-    if (response.data && response.data.data) {
-      console.log("🔍 Campos en response.data.data:", Object.keys(response.data.data));
-      console.log("📞 ¿smsPhoneNumber presente?:", 'smsPhoneNumber' in response.data.data);
-      console.log("📞 Valor de smsPhoneNumber:", response.data.data.smsPhoneNumber);
-    }
-    
-    return response.data; // { status, data: { code, name, logoUrl, colors... } }
+    return response.data;
   } catch (error) {
-    console.error("❌ Error al obtener configuración del barrio:", error);
-    if (error.response) {
-      console.error("📥 Status:", error.response.status);
-      console.error("📥 Data:", JSON.stringify(error.response.data, null, 2));
-    }
     throw error;
   }
 };
@@ -54,16 +39,12 @@ export const getNeighborhoodConfig = async (neighborhoodCode) => {
  */
 export const registerNeighborhood = async (data) => {
   try {
-    console.log("📤 Enviando registro a:", REGISTER_URL);
-    console.log("📦 Datos enviados:", JSON.stringify(data, null, 2));
-    
     const response = await axios.post(REGISTER_URL, data, {
       headers: {
         "Content-Type": "application/json",
       },
     });
     
-    console.log("✅ Respuesta del servidor:", response.data);
     return response.data;
   } catch (error) {
     console.error("❌ Error al registrar barrio:", error.message);
@@ -189,46 +170,83 @@ export const checkLicenseStatus = async (licenseCode) => {
       };
     }
     
-    console.log("🔍 Verificando estado de licencia en el servidor...");
-    console.log("📋 Código de licencia:", licenseCode);
+    // Obtener token de AsyncStorage para autenticación
+    const accessToken = await AsyncStorage.getItem("accessToken");
     
-    const url = `${LICENSE_STATUS_URL}/${licenseCode}`;
-    console.log("📡 URL de verificación:", url);
+    const headers = {
+      "Content-Type": "application/json",
+    };
     
-    const response = await axios.get(url, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      validateStatus: (status) => status < 500, // No lanzar excepción para errores del cliente
-      timeout: 10000, // 10 segundos de timeout
-    });
+    // Agregar token si existe
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+      console.log("🔑 Token incluido en la petición");
+    } else {
+      console.warn("⚠️ No hay accessToken disponible");
+    }
     
-    // Si la respuesta es exitosa (200)
+    // Intentar primero con path parameter (formato estándar)
+    const encodedCode = encodeURIComponent(licenseCode);
+    const url = `${LICENSE_STATUS_URL}/${encodedCode}`;
+    console.log("📡 URL de verificación (path param):", url);
+    console.log("📋 Código original:", licenseCode);
+    console.log("📋 Código codificado:", encodedCode);
+    
+    let response;
+    try {
+      response = await axios.get(url, {
+        headers,
+        validateStatus: (status) => status < 500,
+        timeout: 10000,
+      });
+      
+      console.log("📥 Status HTTP:", response.status);
+      
+      // Si es 404, el endpoint puede no existir o requerir otro formato
+      if (response.status === 404) {
+        console.warn("⚠️ Endpoint no encontrado con path parameter");
+        console.warn("⚠️ Verifica en el servidor que el endpoint esté implementado correctamente");
+        console.warn("⚠️ Ruta esperada: GET /api/v1/neighborhood-license/code/:code");
+      }
+    } catch (error) {
+      console.error("❌ Error en la petición:", error.message);
+      if (error.response) {
+        console.error("📥 Status:", error.response.status);
+        console.error("📥 Data:", error.response.data);
+      }
+      throw error;
+    }
+    
     if (response.status === 200) {
       const responseData = response.data;
       
-      // Log completo de la respuesta para debugging
-      console.log("📥 Respuesta completa del servidor:", JSON.stringify(responseData, null, 2));
+      // 🔍 LOG TEMPORAL: Ver respuesta del servidor
+      console.log("═══════════════════════════════════════════════════════");
+      console.log("📥 RESPUESTA DEL SERVIDOR AL VERIFICAR LICENCIA:");
+      console.log("═══════════════════════════════════════════════════════");
+      console.log(JSON.stringify(responseData, null, 2));
+      console.log("═══════════════════════════════════════════════════════");
       
-      // Formato esperado: { status: "success", data: { code, status: "cancel", accountNumber } }
       let licenseStatus = null;
       
-      if (responseData.status === "success" && responseData.data) {
+      // Intentar diferentes estructuras de respuesta
+      if (responseData.status === "success" && responseData.data && responseData.data.status) {
+        // Estructura: { status: "success", data: { status: "accepted" } }
         licenseStatus = responseData.data.status;
-        console.log("📋 Estado de licencia encontrado:", licenseStatus);
-        console.log("📋 Código de licencia:", responseData.data.code);
-        console.log("📋 Número de cuenta:", responseData.data.accountNumber);
-      } else {
-        console.warn("⚠️ Formato de respuesta inesperado");
-        return {
-          status: "unknown",
-          isValid: false,
-          message: "Formato de respuesta inesperado del servidor"
-        };
+      } else if (responseData.status) {
+        // Estructura: { status: "accepted", ... } (directo)
+        licenseStatus = responseData.status;
+      } else if (responseData.data && responseData.data.status) {
+        // Estructura: { data: { status: "accepted" } }
+        licenseStatus = responseData.data.status;
       }
       
       if (!licenseStatus) {
-        console.warn("⚠️ No se encontró el campo 'status' en la respuesta de la licencia");
+        console.error("❌ No se pudo extraer el status de la respuesta");
+        console.error("📋 Estructura de responseData:", Object.keys(responseData));
+        if (responseData.data) {
+          console.error("📋 Estructura de responseData.data:", Object.keys(responseData.data));
+        }
         return {
           status: "unknown",
           isValid: false,
@@ -236,9 +254,9 @@ export const checkLicenseStatus = async (licenseCode) => {
         };
       }
       
-      // Si el estado es "cancel", la licencia está cancelada
+      console.log("✅ Status extraído:", licenseStatus);
+      
       if (licenseStatus === "cancel" || licenseStatus === "cancelled") {
-        console.log("❌ Licencia cancelada detectada - status:", licenseStatus);
         return {
           status: "cancel",
           isValid: false,
@@ -246,9 +264,7 @@ export const checkLicenseStatus = async (licenseCode) => {
         };
       }
       
-      // Si el estado es "accepted" o similar, la licencia está activa
       if (licenseStatus === "accepted" || licenseStatus === "active" || licenseStatus === "valid") {
-        console.log("✅ Licencia activa - status:", licenseStatus);
         return {
           status: licenseStatus,
           isValid: true,
@@ -256,18 +272,22 @@ export const checkLicenseStatus = async (licenseCode) => {
         };
       }
       
-      // Para otros estados, considerar como válido pero loguear
-      console.warn("⚠️ Estado de licencia desconocido:", licenseStatus);
+      console.warn("⚠️ Status desconocido:", licenseStatus);
       return {
         status: licenseStatus,
-        isValid: true, // Por seguridad, asumir válido para otros estados
+        isValid: true,
         message: `Estado desconocido: ${licenseStatus}`
       };
     }
     
-    // Si es 404, la licencia no existe
     if (response.status === 404) {
-      console.log("❌ Licencia no encontrada (404)");
+      // 🔍 LOG: Ver qué devuelve el servidor en 404
+      console.log("═══════════════════════════════════════════════════════");
+      console.log("📥 RESPUESTA DEL SERVIDOR (404 - Not Found):");
+      console.log("═══════════════════════════════════════════════════════");
+      console.log(JSON.stringify(response.data, null, 2));
+      console.log("═══════════════════════════════════════════════════════");
+      
       return {
         status: "not_found",
         isValid: false,
@@ -275,11 +295,16 @@ export const checkLicenseStatus = async (licenseCode) => {
       };
     }
     
-    // Para otros códigos, asumir error
-    console.warn("⚠️ Respuesta inesperada al verificar estado de licencia:", response.status);
+    // 🔍 LOG: Ver qué devuelve el servidor en otros códigos
+    console.log("═══════════════════════════════════════════════════════");
+    console.log("📥 RESPUESTA DEL SERVIDOR (HTTP " + response.status + "):");
+    console.log("═══════════════════════════════════════════════════════");
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log("═══════════════════════════════════════════════════════");
+    
     return {
       status: "error",
-      isValid: false, // Por seguridad, bloquear si hay error inesperado
+      isValid: false,
       message: `Error al verificar estado (HTTP ${response.status})`
     };
     
@@ -361,5 +386,128 @@ export const sendPanicEvent = async (accessToken, data = {}) => {
       console.error("📥 Error al configurar la petición:", error.message);
       throw error;
     }
+  }
+};
+
+/**
+ * Obtener información de la licencia del usuario autenticado usando el accessToken
+ * Requiere token para acceder a la colección "neighborhoodlicenses" en la BD
+ * @param {string} accessToken - Token JWT del usuario
+ * @returns {Object} { licenseCode, status, accountNumber } o null si hay error
+ */
+export const getLicenseByToken = async (accessToken) => {
+  try {
+    if (!accessToken) {
+      console.error("❌ No se proporcionó el accessToken");
+      return null;
+    }
+    
+    console.log("🔍 Obteniendo código de licencia usando accessToken...");
+    console.log("📡 Llamando a:", GET_LICENSE_BY_TOKEN_URL);
+    
+    const response = await axios.get(GET_LICENSE_BY_TOKEN_URL, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
+      validateStatus: (status) => status < 500,
+      timeout: 10000,
+    });
+    
+    if (response.status === 200) {
+      const responseData = response.data;
+      
+      if (responseData.status === "success" && responseData.data) {
+        const licenseCode = responseData.data.code || responseData.data.licenseCode;
+        if (licenseCode) {
+          return {
+            licenseCode,
+            status: responseData.data.status,
+            accountNumber: responseData.data.accountNumber,
+          };
+        }
+      }
+      
+      return null;
+    } else if (response.status === 401 || response.status === 403) {
+      return null;
+    } else if (response.status === 404) {
+      return null;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    return null;
+    
+    return null;
+  }
+};
+
+/**
+ * Limpiar todos los datos de la app de forma segura
+ * Se usa cuando la licencia es cancelada o cuando el usuario quiere borrar todos los datos
+ * @returns {Promise<boolean>} true si se limpió correctamente, false si hubo errores
+ */
+export const clearAllAppData = async () => {
+  try {
+    console.log("🧹 Iniciando limpieza de AsyncStorage...");
+    
+    const keysToRemove = [
+      "Cuenta",
+      "accessToken",
+      "refreshToken",
+      "licenseCode",
+      "CodigoBarrio",
+      "NumeroCuenta",
+      "neighborhoodName",
+      "logoUrl",
+      "primaryColor",
+      "buttonColor",
+      "backgroundColor",
+      "neighborhoodPhoneNumber",
+      "fullName",
+      "propertyReference",
+      "phoneNumber"
+    ];
+    
+    // Intentar borrar con multiRemove primero (más eficiente)
+    try {
+      await AsyncStorage.multiRemove(keysToRemove);
+      console.log("✅ Datos borrados correctamente con multiRemove");
+    } catch (multiRemoveError) {
+      console.warn("⚠️ multiRemove falló, borrando individualmente:", multiRemoveError);
+      
+      // Si multiRemove falla, borrar individualmente
+      for (const key of keysToRemove) {
+        try {
+          await AsyncStorage.removeItem(key);
+        } catch (individualError) {
+          console.error(`❌ Error al borrar ${key}:`, individualError);
+        }
+      }
+    }
+    
+    // Verificar que el accessToken se borró correctamente
+    const remainingToken = await AsyncStorage.getItem("accessToken");
+    if (remainingToken) {
+      console.error("❌ ADVERTENCIA: accessToken aún existe, intentando borrar de nuevo...");
+      await AsyncStorage.removeItem("accessToken");
+    }
+    
+    console.log("✅ Limpieza de AsyncStorage completada");
+    return true;
+  } catch (error) {
+    console.error("❌ Error crítico al limpiar AsyncStorage:", error);
+    
+    // Intentar limpiar lo más crítico al menos
+    try {
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("refreshToken");
+      await AsyncStorage.removeItem("Cuenta");
+    } catch (criticalError) {
+      console.error("❌ Error crítico al limpiar datos esenciales:", criticalError);
+    }
+    
+    return false;
   }
 };

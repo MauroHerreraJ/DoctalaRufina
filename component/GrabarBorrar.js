@@ -1,9 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-//import { GlobalStyles } from '../constans/Styles';
+import { clearAllAppData } from '../util/Api';
 
 function GrabarBorrar() {
+  const navigation = useNavigation();
+  
   const licencia = {
     storagelicencia: 'nppepe',
     storegeCuenta: '9999'
@@ -12,13 +15,87 @@ function GrabarBorrar() {
   const token = '1234'
 
   const Grabar = async () => {
-    await AsyncStorage.setItem("Cuenta", JSON.stringify({ licencia, token }));
-    console.log('grabado');
+    try {
+      await AsyncStorage.setItem("Cuenta", JSON.stringify({ licencia, token }));
+      console.log('grabado');
+      Alert.alert('Éxito', 'Datos guardados correctamente');
+    } catch (error) {
+      console.error('Error al grabar:', error);
+      Alert.alert('Error', 'No se pudieron guardar los datos');
+    }
   };
 
   const Borrar = async () => {
-    await AsyncStorage.removeItem("Cuenta");
-    console.log('borrado');
+    Alert.alert(
+      '⚠️ Confirmar Borrado',
+      '¿Está seguro que desea borrar todos los datos de la aplicación? Esto lo llevará a la pantalla de configuración inicial.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Borrar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🧹 Iniciando borrado de todos los datos...');
+              const success = await clearAllAppData();
+              
+              if (success) {
+                console.log('✅ Todos los datos borrados correctamente');
+                
+                // Redirigir a la pantalla Welcome
+                try {
+                  // Obtener la navegación del Stack principal
+                  let rootNavigation = navigation;
+                  const parent = navigation.getParent();
+                  if (parent) {
+                    rootNavigation = parent;
+                    const grandParent = parent.getParent();
+                    if (grandParent) {
+                      rootNavigation = grandParent;
+                    }
+                  }
+                  
+                  // Resetear la navegación y redirigir a Secondary (que contiene Welcome)
+                  rootNavigation.dispatch(
+                    CommonActions.reset({
+                      index: 0,
+                      routes: [{ name: 'Secondary' }],
+                    })
+                  );
+                  console.log('✅ Redirigido a pantalla Welcome');
+                } catch (navError) {
+                  console.error('❌ Error al redirigir:', navError);
+                  // Si falla, intentar navegar directamente
+                  try {
+                    navigation.dispatch(
+                      CommonActions.reset({
+                        index: 0,
+                        routes: [{ name: 'Secondary' }],
+                      })
+                    );
+                  } catch (fallbackError) {
+                    console.error('❌ Error en fallback de navegación:', fallbackError);
+                    Alert.alert(
+                      'Datos Borrados',
+                      'Todos los datos han sido borrados. Por favor, cierre y vuelva a abrir la aplicación.',
+                      [{ text: 'OK' }]
+                    );
+                  }
+                }
+              } else {
+                Alert.alert('Error', 'Hubo un problema al borrar algunos datos. Por favor, intente nuevamente.');
+              }
+            } catch (error) {
+              console.error('❌ Error al borrar datos:', error);
+              Alert.alert('Error', 'No se pudieron borrar todos los datos. Por favor, intente nuevamente.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
