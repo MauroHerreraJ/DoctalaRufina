@@ -1,6 +1,6 @@
 {
   "name": "desitapp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -13,15 +13,17 @@
     "@react-navigation/bottom-tabs": "^6.6.0",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.10.0",
+    "@sentry/react-native": "~7.2.0",
     "@types/react": "~19.1.10",
     "axios": "^1.7.2",
-    "expo": "~54.0.27",
+    "expo": "~54.0.30",
     "expo-font": "~14.0.10",
     "expo-linear-gradient": "~15.0.8",
-    "expo-linking": "~8.0.10",
+    "expo-linking": "~8.0.11",
     "expo-sms": "~14.0.8",
-    "expo-splash-screen": "~31.0.12",
+    "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "promise": "^8.3.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-circular-progress": "^1.4.1",
@@ -35,7 +37,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "babel-preset-expo": "^54.0.6",
+    "babel-preset-expo": "~54.0.9",
     "metro-react-native-babel-transformer": "^0.77.0"
   },
   "private": true

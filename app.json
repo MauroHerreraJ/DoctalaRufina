@@ -13,7 +13,7 @@
       "hideExponentText": true
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.herreramauro.DesitApp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -38,7 +38,15 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "docta-panico",
+          "project": "react-native",
+          "url": "https://us.sentry.io/"
+        }
+      ]
     ],
     "extra": {
       "eas": {

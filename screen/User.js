@@ -1,20 +1,29 @@
-import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions } from '@react-navigation/native';
 
 import ClaveModal from "../UI/ClaveModal";
+import DeleteLicenseModal from "../UI/DeleteLicenseModal";
+import {
+  clearAllAppData,
+  deleteAccount,
+  maskLicenseCode,
+} from "../util/Api";
 
 function User({ navigation }) {
   const [cuenta, setCuenta] = useState("");
   const [nombreBarrio, setNombreBarrio] = useState("");
   const [nombreCompleto, setNombreCompleto] = useState("");
+  const [licenseCode, setLicenseCode] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDeletingLicense, setIsDeletingLicense] = useState(false);
   const [isBorrarAccess, setIsBorrarAccess] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Cargar número de cuenta
         const storedCuenta = await AsyncStorage.getItem("NumeroCuenta") || await AsyncStorage.getItem("Cuenta");
         if (storedCuenta) {
           setCuenta(storedCuenta);
@@ -22,7 +31,6 @@ function User({ navigation }) {
           setCuenta("No hay una cuenta guardada");
         }
 
-        // Cargar nombre del barrio
         const storedNombreBarrio = await AsyncStorage.getItem("neighborhoodName");
         if (storedNombreBarrio) {
           setNombreBarrio(storedNombreBarrio);
@@ -36,8 +44,12 @@ function User({ navigation }) {
         } else {
           setNombreCompleto("No hay datos personales cargados");
         }
+
+        const storedLicenseCode = await AsyncStorage.getItem("licenseCode");
+        if (storedLicenseCode) {
+          setLicenseCode(storedLicenseCode);
+        }
       } catch (error) {
-        console.error("Error al obtener los datos:", error);
         setCuenta("Error al cargar la cuenta");
         setNombreBarrio("Error al cargar el barrio");
         setNombreCompleto("Error al cargar datos personales");
@@ -47,20 +59,116 @@ function User({ navigation }) {
     loadData();
   }, []);
 
+  const navigateToWelcome = () => {
+    try {
+      let rootNavigation = navigation;
+      const parent = navigation.getParent();
+      if (parent) {
+        rootNavigation = parent;
+        const grandParent = parent.getParent();
+        if (grandParent) {
+          rootNavigation = grandParent;
+        }
+      }
+
+      rootNavigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Secondary' }],
+        })
+      );
+    } catch (navError) {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Secondary' }],
+        })
+      );
+    }
+  };
+
   const openClaveModal = () => {
-    setIsModalVisible(true); // Mostrar modal para ingresar la clave
+    setIsModalVisible(true);
   };
+
   const closeClaveModal = () => {
-    setIsModalVisible(false); // Cerrar modal
+    setIsModalVisible(false);
   };
+
   const handleClaveSubmit = (claveIngresada) => {
     if (claveIngresada === '253614') {
-      setIsBorrarAccess(true); // Si la clave es correcta, permitir acceso
-      navigation.navigate('GrabarBorrar'); // Navegar a la pantalla GrabarBorrar
+      setIsBorrarAccess(true);
+      navigation.navigate('GrabarBorrar');
     } else {
-      alert('Clave incorrecta'); // Si la clave es incorrecta
+      alert('Clave incorrecta');
     }
-    closeClaveModal(); // Cerrar modal
+    closeClaveModal();
+  };
+
+  const openDeleteLicenseFlow = () => {
+    if (!licenseCode?.trim()) {
+      Alert.alert(
+        "Error",
+        "No se encontró el código de licencia en este dispositivo."
+      );
+      return;
+    }
+
+    Alert.alert(
+      "Eliminar licencia",
+      "Está a punto de eliminar su licencia y los datos asociados en el servidor. Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Continuar",
+          style: "destructive",
+          onPress: () => setIsDeleteModalVisible(true),
+        },
+      ]
+    );
+  };
+
+  const closeDeleteModal = () => {
+    if (!isDeletingLicense) {
+      setIsDeleteModalVisible(false);
+    }
+  };
+
+  const handleConfirmDeleteLicense = async () => {
+    if (!licenseCode?.trim()) {
+      Alert.alert(
+        "Error",
+        "No se encontró el código de licencia en este dispositivo."
+      );
+      return;
+    }
+
+    setIsDeletingLicense(true);
+
+    try {
+      await deleteAccount(licenseCode);
+      const success = await clearAllAppData();
+
+      if (!success) {
+        Alert.alert(
+          "Advertencia",
+          "La cuenta fue eliminada en el servidor, pero hubo un problema al limpiar los datos locales. Por favor, reinicie la aplicación."
+        );
+        return;
+      }
+
+      setIsDeleteModalVisible(false);
+      setLicenseCode("");
+      navigateToWelcome();
+    } catch (error) {
+      Alert.alert(
+        "No se pudo eliminar",
+        error.userMessage || "Ocurrió un error inesperado. Por favor, intenta de nuevo.",
+        [{ text: "Cerrar" }]
+      );
+    } finally {
+      setIsDeletingLicense(false);
+    }
   };
 
   return (
@@ -81,12 +189,24 @@ function User({ navigation }) {
 
           <Text style={styles.label}>Número de cuenta</Text>
           <Text style={styles.infoValue} numberOfLines={2} adjustsFontSizeToFit>{cuenta}</Text>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.label}>Código</Text>
+          <Text style={styles.infoValue} numberOfLines={1} adjustsFontSizeToFit>
+            {licenseCode ? maskLicenseCode(licenseCode) : "No disponible"}
+          </Text>
         </View>
       </View>
       <View style={styles.imageContainer}>
         <Image source={require("../assets/logonuevo.png")}
           style={{ width: 59, height: 59 }} />
       </View>
+      {licenseCode ? (
+        <TouchableOpacity style={styles.deleteLicenseButton} onPress={openDeleteLicenseFlow}>
+          <Text style={styles.deleteLicenseButtonText}>Eliminar licencia</Text>
+        </TouchableOpacity>
+      ) : null}
       <TouchableOpacity style={styles.buttonUpdate} onPress={openClaveModal}>
         <Text style={styles.textImage}>Producto desarrollado por Desit SA</Text>
       </TouchableOpacity>
@@ -95,7 +215,13 @@ function User({ navigation }) {
         onClose={closeClaveModal}
         onSubmit={handleClaveSubmit}
       />
-
+      <DeleteLicenseModal
+        visible={isDeleteModalVisible}
+        onClose={closeDeleteModal}
+        licenseCode={licenseCode}
+        onConfirmDelete={handleConfirmDeleteLicense}
+        isDeleting={isDeletingLicense}
+      />
     </>
   );
 }
@@ -120,6 +246,20 @@ const styles = StyleSheet.create({
 
   buttonUpdate: {
     marginTop: 5,
+  },
+  deleteLicenseButton: {
+    marginHorizontal: 24,
+    marginBottom: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "#c62828",
+    alignItems: "center",
+  },
+  deleteLicenseButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   container: {
     flex: 1,

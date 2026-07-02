@@ -17,10 +17,8 @@ function GrabarBorrar() {
   const Grabar = async () => {
     try {
       await AsyncStorage.setItem("Cuenta", JSON.stringify({ licencia, token }));
-      console.log('grabado');
       Alert.alert('Éxito', 'Datos guardados correctamente');
     } catch (error) {
-      console.error('Error al grabar:', error);
       Alert.alert('Error', 'No se pudieron guardar los datos');
     }
   };
@@ -39,11 +37,9 @@ function GrabarBorrar() {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('🧹 Iniciando borrado de todos los datos...');
               const success = await clearAllAppData();
               
               if (success) {
-                console.log('✅ Todos los datos borrados correctamente');
                 
                 // Redirigir a la pantalla Welcome
                 try {
@@ -65,9 +61,7 @@ function GrabarBorrar() {
                       routes: [{ name: 'Secondary' }],
                     })
                   );
-                  console.log('✅ Redirigido a pantalla Welcome');
                 } catch (navError) {
-                  console.error('❌ Error al redirigir:', navError);
                   // Si falla, intentar navegar directamente
                   try {
                     navigation.dispatch(
@@ -77,7 +71,6 @@ function GrabarBorrar() {
                       })
                     );
                   } catch (fallbackError) {
-                    console.error('❌ Error en fallback de navegación:', fallbackError);
                     Alert.alert(
                       'Datos Borrados',
                       'Todos los datos han sido borrados. Por favor, cierre y vuelva a abrir la aplicación.',
@@ -89,7 +82,6 @@ function GrabarBorrar() {
                 Alert.alert('Error', 'Hubo un problema al borrar algunos datos. Por favor, intente nuevamente.');
               }
             } catch (error) {
-              console.error('❌ Error al borrar datos:', error);
               Alert.alert('Error', 'No se pudieron borrar todos los datos. Por favor, intente nuevamente.');
             }
           },

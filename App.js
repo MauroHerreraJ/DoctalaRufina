@@ -1,3 +1,5 @@
+import './util/sentry';
+import { navigationIntegration, Sentry } from './util/sentry';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, useNavigation, CommonActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -80,7 +82,6 @@ function AuthorizedNavigation() {
                 // Mantener el valor anterior si existe
                 const storedPhone = await AsyncStorage.getItem("neighborhoodPhoneNumber");
                 if (!storedPhone) {
-                  console.warn("⚠️ No hay número de teléfono configurado");
                 }
               }
             }
@@ -89,7 +90,6 @@ function AuthorizedNavigation() {
           }
         }
       } catch (error) {
-        console.error("Error al cargar configuración del barrio:", error);
       }
     };
     loadNeighborhoodConfig();
@@ -108,18 +108,9 @@ function AuthorizedNavigation() {
         
         const licenseStatusResult = await checkLicenseStatus(licenseCode);
         
-        // 🔍 LOG TEMPORAL: Ver qué devolvió checkLicenseStatus
-        console.log("═══════════════════════════════════════════════════════");
-        console.log("📋 RESULTADO DE checkLicenseStatus:");
-        console.log("═══════════════════════════════════════════════════════");
-        console.log(JSON.stringify(licenseStatusResult, null, 2));
-        console.log("═══════════════════════════════════════════════════════");
-        
         // Si la licencia está cancelada (solo si explícitamente está cancelada)
         // "not_found" puede ser un error temporal de la BD, no tratarlo como cancelada
         if (licenseStatusResult.status === "cancel" || licenseStatusResult.status === "cancelled") {
-          console.log("❌ Licencia cancelada (verificación periódica) - Redirigiendo a Welcome");
-          console.log("📋 Razón:", licenseStatusResult.message || "Licencia cancelada");
           
           if (intervalId) {
             clearInterval(intervalId);
@@ -160,7 +151,6 @@ function AuthorizedNavigation() {
                         })
                       );
                     } catch (fallbackError) {
-                      console.error("❌ Error al redirigir:", fallbackError);
                     }
                   }
                 }
@@ -170,7 +160,6 @@ function AuthorizedNavigation() {
           );
         }
       } catch (error) {
-        console.error("❌ Error en verificación periódica:", error);
       }
     };
     
@@ -202,7 +191,6 @@ function AuthorizedNavigation() {
           }
         },
         (error) => {
-          console.warn("No se pudo obtener el tamaño del logo remoto:", error);
         }
       );
     } else {
@@ -300,7 +288,7 @@ function NoAuthorizedNavigation() {
     </BottomTabs.Navigator>
   );}
 
-export default function App() {
+function App() {
 
   const [fontsLoaded] = useFonts({
     "open-sans": require("./fonts/OpenSans-Regular.ttf"),
@@ -323,14 +311,12 @@ export default function App() {
         
         if (licenseCode) {
           // Hay código de licencia, verificar su estado en el servidor
-          console.log("🔍 Verificando estado de licencia:", licenseCode);
           
           try {
             const licenseStatusResult = await checkLicenseStatus(licenseCode);
             
             // Verificar si la licencia está cancelada
             if (licenseStatusResult.status === "cancel" || licenseStatusResult.status === "cancelled") {
-              console.log("❌ Licencia cancelada - Redirigiendo a Welcome");
               await clearAllAppData();
               setIsAuthorized(false);
               
@@ -343,29 +329,22 @@ export default function App() {
                 }
               }, 100);
             } else if (licenseStatusResult.status === "accepted" || licenseStatusResult.isValid) {
-              console.log("✅ Licencia activa");
               setIsAuthorized(true);
             } else if (licenseStatusResult.status === "not_found") {
               // "not_found" puede ser un error temporal de la BD, permitir acceso
-              console.warn("⚠️ Licencia no encontrada en el servidor (puede ser error temporal)");
-              console.log("ℹ️ Permitiendo acceso - Se verificará nuevamente en la próxima verificación periódica");
               setIsAuthorized(true);
             } else {
               // Otros estados desconocidos, permitir acceso por seguridad
-              console.warn("⚠️ Estado de licencia desconocido:", licenseStatusResult.status);
               setIsAuthorized(true);
             }
           } catch (error) {
-            console.error("❌ Error al verificar licencia:", error);
             setIsAuthorized(true);
           }
         } else {
-          console.log("⚠️ No hay código de licencia - Redirigiendo a Welcome");
           setIsAuthorized(false);
         }
 
       } catch (e) {
-        console.warn("Error al preparar la app:", e);
         // En caso de error, no autorizar para forzar configuración
         setIsAuthorized(false);
       } finally {
@@ -393,14 +372,12 @@ export default function App() {
             AsyncStorage.getItem("NumeroCuenta").then((numeroCuenta) => {
               // Si no hay datos, redirigir a Welcome
               if (!cuenta && !codigoBarrio && !numeroCuenta) {
-                console.log("🔄 Redirigiendo a Welcome porque no hay datos y isAuthorized es false");
                 try {
                   navigationRef.current?.reset({
                     index: 0,
                     routes: [{ name: 'Secondary' }],
                   });
                 } catch (error) {
-                  console.error("❌ Error al redirigir:", error);
                 }
               }
             });
@@ -416,7 +393,10 @@ export default function App() {
   return (
     <KeyboardProvider>
       <StatusBar style='light' />
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={() => navigationIntegration.registerNavigationContainer(navigationRef)}
+      >
         <Stack.Navigator initialRouteName={isAuthorized ? "Principal" : "Secondary"}>
 
           <Stack.Screen
@@ -472,3 +452,5 @@ export default function App() {
     </KeyboardProvider>
   );
 }
+
+export default Sentry.wrap(App);

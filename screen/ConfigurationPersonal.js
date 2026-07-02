@@ -55,11 +55,6 @@ function ConfigurationPersonal() {
 
       if (response.status === "success" && response.data) {
         // 🔍 LOG TEMPORAL: Mostrar respuesta completa del servidor
-        console.log("═══════════════════════════════════════════════════════");
-        console.log("📥 RESPUESTA COMPLETA DEL SERVIDOR AL CREAR LICENCIA:");
-        console.log("═══════════════════════════════════════════════════════");
-        console.log(JSON.stringify(response.data, null, 2));
-        console.log("═══════════════════════════════════════════════════════");
         
         // Guardar tokens
         await AsyncStorage.setItem("accessToken", response.data.accessToken);
@@ -102,9 +97,7 @@ function ConfigurationPersonal() {
         // Guardar el código de licencia si se encontró
         if (licenseCode) {
           await AsyncStorage.setItem("licenseCode", licenseCode);
-          console.log("✅ Código de licencia guardado:", licenseCode);
         } else {
-          console.error("❌ No se encontró el código de licencia en la respuesta del servidor");
           Alert.alert(
             "⚠️ Error al guardar código de licencia",
             "No se pudo obtener el código de licencia del servidor. La aplicación puede no funcionar correctamente al reiniciar.",
@@ -135,7 +128,6 @@ function ConfigurationPersonal() {
         Alert.alert("Error", "Respuesta inválida del servidor.");
       }
     } catch (error) {
-      console.error("Error guardando datos personales:", error);
       const errorMessage = error.message || "Error desconocido";
 
       if (errorMessage.includes("not found") || errorMessage.includes("no encontrado")) {

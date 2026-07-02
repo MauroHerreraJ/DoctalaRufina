@@ -24,7 +24,6 @@ const AllButtons = () => {
           setProgressColor(storedPrimaryColor);
         }
       } catch (error) {
-        console.error("Error al cargar colores:", error);
       }
     };
     loadColors();
@@ -66,23 +65,8 @@ const AllButtons = () => {
     // Obtener el número de teléfono del barrio desde AsyncStorage
     const numeroDestino = await AsyncStorage.getItem("neighborhoodPhoneNumber");
   
-    console.log("🚨 Iniciando envío de evento de pánico...");
-    console.log("📋 Cuenta:", numeroCuenta);
-    console.log("🏘️ Barrio:", codigoBarrio);
-    console.log("📞 Número destino SMS:", numeroDestino || "No configurado");
-    
-    // Debug: Verificar todos los valores guardados relacionados con teléfono
-    const allPhoneKeys = await AsyncStorage.multiGet([
-      "neighborhoodPhoneNumber",
-      "phoneNumber",
-      "CodigoBarrio",
-      "NumeroCuenta"
-    ]);
-    console.log("🔍 Valores guardados en AsyncStorage:", allPhoneKeys);
-  
     // Verificar que la app esté configurada
     if (!accessToken || !numeroCuenta) {
-      console.log("❌ App no configurada correctamente");
       Alert.alert(
         'Error de Configuración',
         'La aplicación no está configurada. Por favor, ingresa tu código de barrio y número de cuenta.',
@@ -93,21 +77,18 @@ const AllButtons = () => {
   
     try {
       // Enviar evento usando la API del neighborhood (con JWT)
-      console.log("✅ Enviando evento por API del barrio...");
       const result = await sendPanicEvent(accessToken, {
         eventType: "PANIC",
         timestamp: new Date().toISOString(),
         // Puedes agregar más datos aquí (ubicación, etc.)
       });
       
-      console.log("🎉 Evento enviado correctamente:", result);
       // Minimizar/cerrar la app inmediatamente sin mostrar alerta
       // Esto es importante para seguridad: ocultar la app del atacante
       if (Platform.OS === 'android') {
         BackHandler.exitApp();
       } else {
-        // En iOS, intentar minimizar la app inmediatamente
-        // Múltiples intentos para asegurar que se minimice
+        // iOS no permite cerrar apps. Ver APP_STORE_REVIEW_NOTES.md para el revisor.
         try {
           // Método más efectivo: abrir Settings (minimiza la app actual)
           Linking.openURL('app-settings:').catch(() => {
@@ -117,19 +98,16 @@ const AllButtons = () => {
                 // Fallback 2: Intentar abrir mailto: (abre Mail, minimiza la app)
                 setTimeout(() => {
                   Linking.openURL('mailto:').catch(() => {
-                    console.log("iOS: No se pudo minimizar la app automáticamente");
                   });
                 }, 50);
               });
             }, 100);
           });
         } catch (error) {
-          console.log("iOS: Error al intentar minimizar la app:", error);
         }
       }
   
     } catch (error) {
-      console.error("❌ Error al enviar evento:", error);
     
       // Verificar si existe el número de teléfono del barrio
       if (!numeroDestino) {
@@ -172,14 +150,12 @@ const AllButtons = () => {
                           Linking.openURL('tel:').catch(() => {
                             setTimeout(() => {
                               Linking.openURL('mailto:').catch(() => {
-                                console.log("iOS: No se pudo minimizar la app automáticamente");
                               });
                             }, 50);
                           });
                         }, 100);
                       });
                     } catch (error) {
-                      console.log("iOS: Error al intentar minimizar la app:", error);
                     }
                   }
                 }

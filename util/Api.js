@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // 🔹 URLs para desarrollo y producción
-const DEVELOP_URL = "https://desit-server-staging-a51a84ceec47.herokuapp.com";
+const DEVELOP_URL = "https://desit-server-3e06b7680f25.herokuapp.com";
 
 const getBaseUrl = () => {
   return DEVELOP_URL;
@@ -16,6 +16,7 @@ const NEIGHBORHOOD_CONFIG_URL = `${getBaseUrl()}/api/v1/neighborhood/config`;
 const VALIDATE_ACCOUNT_URL = `${getBaseUrl()}/api/v1/neighborhood-account-number/check-availability`;
 const LICENSE_STATUS_URL = `${getBaseUrl()}/api/v1/neighborhood-license/code`;
 const GET_LICENSE_BY_TOKEN_URL = `${getBaseUrl()}/api/v1/neighborhood-license/me`;
+const DELETE_ACCOUNT_URL = `${getBaseUrl()}/api/v1/neighborhood-register/delete-account`;
 
 // 🔹 API FUNCTIONS
 
@@ -47,20 +48,15 @@ export const registerNeighborhood = async (data) => {
     
     return response.data;
   } catch (error) {
-    console.error("❌ Error al registrar barrio:", error.message);
     
     if (error.response) {
       // El servidor respondió con un error
-      console.error("📥 Status Code:", error.response.status);
-      console.error("📥 Datos del error:", JSON.stringify(error.response.data, null, 2));
       
       const errorMessage = error.response.data.message || error.response.data.error || "Error al registrar";
       throw new Error(errorMessage);
     } else if (error.request) {
-      console.error("📥 No hubo respuesta del servidor");
       throw new Error("No se pudo conectar con el servidor");
     } else {
-      console.error("📥 Error al configurar la petición:", error.message);
       throw error;
     }
   }
@@ -75,17 +71,10 @@ export const registerNeighborhood = async (data) => {
 export const validateAccountNumber = async (neighborhoodCode, accountNumber) => {
   try {
     const url = `${VALIDATE_ACCOUNT_URL}/${neighborhoodCode}?numberId=${accountNumber}`;
-    console.log("📡 Validando número de cuenta:", url);
     const response = await axios.get(url);
     
-    console.log("📥 Respuesta de validación:", JSON.stringify(response.data, null, 2));
     return response.data; // { status, data: { exists, available } }
   } catch (error) {
-    console.error("❌ Error al validar número de cuenta:", error);
-    if (error.response) {
-      console.error("📥 Status:", error.response.status);
-      console.error("📥 Data:", JSON.stringify(error.response.data, null, 2));
-    }
     throw error;
   }
 };
@@ -115,38 +104,31 @@ export const validateAccessToken = async (accessToken) => {
     
     // Si la respuesta es 200-299, el token es válido
     if (response.status >= 200 && response.status < 300) {
-      console.log("✅ Token válido - Licencia activa");
       return true;
     }
     
     // Si es 401 o 403, el token es inválido o la licencia fue eliminada
     if (response.status === 401 || response.status === 403) {
-      console.log("❌ Token inválido o licencia eliminada (status:", response.status, ")");
       return false;
     }
     
     // Para otros códigos, asumir inválido por seguridad
-    console.warn("⚠️ Respuesta inesperada al validar token:", response.status);
     return false;
   } catch (error) {
-    console.error("❌ Error al validar token:", error);
     
     // Si hay un error de red (sin respuesta del servidor), asumimos que el token podría ser válido
     // para no bloquear al usuario si hay problemas de conexión temporal
     if (error.request && !error.response) {
-      console.warn("⚠️ Error de conexión al validar token, asumiendo válido para no bloquear usuario");
       return true; // En caso de error de conexión, permitir continuar
     }
     
     // Si el servidor responde con 401 o 403, el token es inválido
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      console.log("❌ Token inválido o licencia eliminada (error response:", error.response.status, ")");
       return false;
     }
     
     // Para otros errores de servidor (500, etc.), asumir válido para no bloquear
     // pero loguear el error para debugging
-    console.warn("⚠️ Error del servidor al validar token, asumiendo válido. Status:", error.response?.status);
     return true;
   }
 };
@@ -162,7 +144,6 @@ export const validateAccessToken = async (accessToken) => {
 export const checkLicenseStatus = async (licenseCode) => {
   try {
     if (!licenseCode) {
-      console.error("❌ No se proporcionó el código de licencia");
       return {
         status: "no_license_code",
         isValid: false,
@@ -180,17 +161,11 @@ export const checkLicenseStatus = async (licenseCode) => {
     // Agregar token si existe
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
-      console.log("🔑 Token incluido en la petición");
-    } else {
-      console.warn("⚠️ No hay accessToken disponible");
     }
     
     // Intentar primero con path parameter (formato estándar)
     const encodedCode = encodeURIComponent(licenseCode);
     const url = `${LICENSE_STATUS_URL}/${encodedCode}`;
-    console.log("📡 URL de verificación (path param):", url);
-    console.log("📋 Código original:", licenseCode);
-    console.log("📋 Código codificado:", encodedCode);
     
     let response;
     try {
@@ -199,33 +174,12 @@ export const checkLicenseStatus = async (licenseCode) => {
         validateStatus: (status) => status < 500,
         timeout: 10000,
       });
-      
-      console.log("📥 Status HTTP:", response.status);
-      
-      // Si es 404, el endpoint puede no existir o requerir otro formato
-      if (response.status === 404) {
-        console.warn("⚠️ Endpoint no encontrado con path parameter");
-        console.warn("⚠️ Verifica en el servidor que el endpoint esté implementado correctamente");
-        console.warn("⚠️ Ruta esperada: GET /api/v1/neighborhood-license/code/:code");
-      }
     } catch (error) {
-      console.error("❌ Error en la petición:", error.message);
-      if (error.response) {
-        console.error("📥 Status:", error.response.status);
-        console.error("📥 Data:", error.response.data);
-      }
       throw error;
     }
     
     if (response.status === 200) {
       const responseData = response.data;
-      
-      // 🔍 LOG TEMPORAL: Ver respuesta del servidor
-      console.log("═══════════════════════════════════════════════════════");
-      console.log("📥 RESPUESTA DEL SERVIDOR AL VERIFICAR LICENCIA:");
-      console.log("═══════════════════════════════════════════════════════");
-      console.log(JSON.stringify(responseData, null, 2));
-      console.log("═══════════════════════════════════════════════════════");
       
       let licenseStatus = null;
       
@@ -242,11 +196,6 @@ export const checkLicenseStatus = async (licenseCode) => {
       }
       
       if (!licenseStatus) {
-        console.error("❌ No se pudo extraer el status de la respuesta");
-        console.error("📋 Estructura de responseData:", Object.keys(responseData));
-        if (responseData.data) {
-          console.error("📋 Estructura de responseData.data:", Object.keys(responseData.data));
-        }
         return {
           status: "unknown",
           isValid: false,
@@ -254,7 +203,6 @@ export const checkLicenseStatus = async (licenseCode) => {
         };
       }
       
-      console.log("✅ Status extraído:", licenseStatus);
       
       if (licenseStatus === "cancel" || licenseStatus === "cancelled") {
         return {
@@ -272,7 +220,6 @@ export const checkLicenseStatus = async (licenseCode) => {
         };
       }
       
-      console.warn("⚠️ Status desconocido:", licenseStatus);
       return {
         status: licenseStatus,
         isValid: true,
@@ -281,26 +228,12 @@ export const checkLicenseStatus = async (licenseCode) => {
     }
     
     if (response.status === 404) {
-      // 🔍 LOG: Ver qué devuelve el servidor en 404
-      console.log("═══════════════════════════════════════════════════════");
-      console.log("📥 RESPUESTA DEL SERVIDOR (404 - Not Found):");
-      console.log("═══════════════════════════════════════════════════════");
-      console.log(JSON.stringify(response.data, null, 2));
-      console.log("═══════════════════════════════════════════════════════");
-      
       return {
         status: "not_found",
         isValid: false,
         message: "Licencia no encontrada"
       };
     }
-    
-    // 🔍 LOG: Ver qué devuelve el servidor en otros códigos
-    console.log("═══════════════════════════════════════════════════════");
-    console.log("📥 RESPUESTA DEL SERVIDOR (HTTP " + response.status + "):");
-    console.log("═══════════════════════════════════════════════════════");
-    console.log(JSON.stringify(response.data, null, 2));
-    console.log("═══════════════════════════════════════════════════════");
     
     return {
       status: "error",
@@ -309,11 +242,8 @@ export const checkLicenseStatus = async (licenseCode) => {
     };
     
   } catch (error) {
-    console.error("❌ Error al verificar estado de licencia:", error);
-    
     // Si el servidor responde con 404 (licencia no existe)
     if (error.response && error.response.status === 404) {
-      console.error("❌ Licencia no encontrada (404)");
       return {
         status: "not_found",
         isValid: false,
@@ -332,7 +262,6 @@ export const checkLicenseStatus = async (licenseCode) => {
     
     // Si hay un error de red (sin respuesta del servidor)
     if (error.request && !error.response) {
-      console.warn("⚠️ Error de conexión al verificar estado de licencia");
       return {
         status: "connection_error",
         isValid: true, // Permitir acceso temporal si hay error de conexión
@@ -357,9 +286,6 @@ export const checkLicenseStatus = async (licenseCode) => {
  */
 export const sendPanicEvent = async (accessToken, data = {}) => {
   try {
-    console.log("🚨 Enviando evento de pánico a:", PANIC_EVENT_URL);
-    console.log("📦 Datos del evento:", JSON.stringify(data, null, 2));
-    console.log("🔑 Token (primeros 50 chars):", accessToken.substring(0, 50) + "...");
     
     const response = await axios.post(PANIC_EVENT_URL, data, {
       headers: {
@@ -368,22 +294,16 @@ export const sendPanicEvent = async (accessToken, data = {}) => {
       },
     });
     
-    console.log("✅ Respuesta del servidor:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
-    console.error("❌ Error al enviar evento de pánico:", error.message);
     
     if (error.response) {
-      console.error("📥 Status Code:", error.response.status);
-      console.error("📥 Datos del error:", JSON.stringify(error.response.data, null, 2));
       
       const errorMessage = error.response.data.message || error.response.data.error || "Error al enviar evento";
       throw new Error(errorMessage);
     } else if (error.request) {
-      console.error("📥 No hubo respuesta del servidor");
       throw new Error("No se pudo conectar con el servidor");
     } else {
-      console.error("📥 Error al configurar la petición:", error.message);
       throw error;
     }
   }
@@ -398,12 +318,9 @@ export const sendPanicEvent = async (accessToken, data = {}) => {
 export const getLicenseByToken = async (accessToken) => {
   try {
     if (!accessToken) {
-      console.error("❌ No se proporcionó el accessToken");
       return null;
     }
     
-    console.log("🔍 Obteniendo código de licencia usando accessToken...");
-    console.log("📡 Llamando a:", GET_LICENSE_BY_TOKEN_URL);
     
     const response = await axios.get(GET_LICENSE_BY_TOKEN_URL, {
       headers: {
@@ -438,8 +355,101 @@ export const getLicenseByToken = async (accessToken) => {
     }
   } catch (error) {
     return null;
-    
-    return null;
+  }
+};
+
+/**
+ * Enmascarar código de licencia para mostrar en pantalla (ej: ****-****-****-f22b)
+ * @param {string} licenseCode
+ */
+export const maskLicenseCode = (licenseCode) => {
+  if (!licenseCode) {
+    return "No disponible";
+  }
+
+  const trimmed = licenseCode.trim();
+  const parts = trimmed.split("-");
+
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    return `${parts.slice(0, -1).map(() => "****").join("-")}-${last}`;
+  }
+
+  if (trimmed.length <= 4) {
+    return trimmed;
+  }
+
+  return `${"*".repeat(trimmed.length - 4)}${trimmed.slice(-4)}`;
+};
+
+/**
+ * Eliminar cuenta y licencia en el servidor
+ * @param {string} licenseCode
+ * @returns {Promise<Object>} Respuesta del servidor en caso de éxito
+ */
+export const deleteAccount = async (licenseCode) => {
+  if (!licenseCode?.trim()) {
+    const error = new Error("licenseCode is required");
+    error.userMessage = "No se encontró el código de licencia en este dispositivo.";
+    throw error;
+  }
+
+  try {
+    const response = await axios.delete(DELETE_ACCOUNT_URL, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        licenseCode: licenseCode.trim(),
+      },
+      timeout: 30000,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      const status = error.response.status;
+      const serverMessage = error.response.data?.message;
+      let userMessage;
+
+      switch (status) {
+        case 404:
+          userMessage = serverMessage || "Licencia no encontrada";
+          break;
+        case 403:
+          userMessage =
+            "Esta cuenta no puede ser eliminada automáticamente. Por favor, contacta con el administrador del barrio.";
+          break;
+        case 409:
+          userMessage =
+            "Hubo un conflicto al procesar tu solicitud. Por favor, reinicia la aplicación e intenta de nuevo";
+          break;
+        case 500:
+          userMessage =
+            "Lo sentimos, hubo un problema técnico. Por favor, intenta de nuevo en unos minutos.";
+          break;
+        case 400:
+          userMessage = serverMessage || "Falta el código de licencia";
+          break;
+        default:
+          userMessage =
+            serverMessage || "No se pudo eliminar la cuenta. Por favor, intenta de nuevo.";
+      }
+
+      const apiError = new Error(userMessage);
+      apiError.userMessage = userMessage;
+      apiError.status = status;
+      throw apiError;
+    }
+
+    if (error.request) {
+      const networkError = new Error("connection_error");
+      networkError.userMessage =
+        "No se pudo conectar con el servidor. Verifica tu conexión a internet e intenta nuevamente.";
+      throw networkError;
+    }
+
+    throw error;
   }
 };
 
@@ -450,7 +460,6 @@ export const getLicenseByToken = async (accessToken) => {
  */
 export const clearAllAppData = async () => {
   try {
-    console.log("🧹 Iniciando limpieza de AsyncStorage...");
     
     const keysToRemove = [
       "Cuenta",
@@ -473,16 +482,13 @@ export const clearAllAppData = async () => {
     // Intentar borrar con multiRemove primero (más eficiente)
     try {
       await AsyncStorage.multiRemove(keysToRemove);
-      console.log("✅ Datos borrados correctamente con multiRemove");
     } catch (multiRemoveError) {
-      console.warn("⚠️ multiRemove falló, borrando individualmente:", multiRemoveError);
       
       // Si multiRemove falla, borrar individualmente
       for (const key of keysToRemove) {
         try {
           await AsyncStorage.removeItem(key);
         } catch (individualError) {
-          console.error(`❌ Error al borrar ${key}:`, individualError);
         }
       }
     }
@@ -490,14 +496,11 @@ export const clearAllAppData = async () => {
     // Verificar que el accessToken se borró correctamente
     const remainingToken = await AsyncStorage.getItem("accessToken");
     if (remainingToken) {
-      console.error("❌ ADVERTENCIA: accessToken aún existe, intentando borrar de nuevo...");
       await AsyncStorage.removeItem("accessToken");
     }
     
-    console.log("✅ Limpieza de AsyncStorage completada");
     return true;
   } catch (error) {
-    console.error("❌ Error crítico al limpiar AsyncStorage:", error);
     
     // Intentar limpiar lo más crítico al menos
     try {
@@ -505,7 +508,6 @@ export const clearAllAppData = async () => {
       await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("Cuenta");
     } catch (criticalError) {
-      console.error("❌ Error crítico al limpiar datos esenciales:", criticalError);
     }
     
     return false;

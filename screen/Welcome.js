@@ -53,11 +53,10 @@ function Welcome({ navigation }) {
                         Configuración inicial
                     </Text>
                     <Text style={styles.politicText}>
-                        Para comenzar a utilizar la aplicación usted deberá completar tres campos, el primero con el código de licencia, el segundo con el número de equipo y el tercero con el número de cuenta, todos provistos por el organismo de control de implementación de uso de esta APP.
-                        Al ingresar los datos correctos, la aplicación puede solicitar permisos que usted deberá aceptar, de lo contrario la aplicación quedará sin funcionar.
-                        Para mayor detalle consultar el instructivo de instalación de la APP que le envió el organismo de control de uso y aplicación de este sistema.
-                        Una vez hecho esto la aplicación quedará lista para su uso.
-                        Nota: Los datos con los que configuró el envío de eventos hacia la central son ÚNICOS por cada APP individual.
+                        Para comenzar a utilizar la aplicación deberá completar el proceso de registro en dos pasos, con datos provistos por el organismo de control del barrio: primero, el código del barrio y el número de cuenta; luego, sus datos personales (nombre y apellido, referencia de la propiedad y teléfono de contacto).
+                        Al completar el registro, el servidor generará automáticamente una licencia de uso única para este dispositivo. Esa licencia quedará asociada a su cuenta y podrá consultarse en la sección Sistema de la aplicación.
+                        Una vez finalizada la configuración, la aplicación quedará lista para su uso.
+                        Nota: Los datos con los que configuró el envío de eventos hacia la central son únicos por cada aplicación individual.
                     </Text>
                     <Text style={styles.textTitle}>
 
@@ -73,8 +72,7 @@ function Welcome({ navigation }) {
                         Formas de envío de alerta
                     </Text>
                     <Text style={styles.politicText}>
-                        La aplicación cuenta con la capacidad de enviar la alerta vía Internet.
-
+                        La aplicación envía la alerta principalmente vía Internet. Si no hay conexión disponible, puede ofrecer el envío del evento mediante SMS como alternativa.
                     </Text>
 
                     <Text style={styles.textTitle}>
@@ -99,41 +97,41 @@ function Welcome({ navigation }) {
                     </Text>
 
                     <Text style={styles.politicText}>
-
-                        La presente Política de Privacidad establece los términos en que Desit SA usa y protege la información que es proporcionada por sus usuarios al momento de utilizar Docta Pánico. Desit SA está comprometido con la seguridad de los datos de sus usuarios y aseguramos que los mismos serán empleados de acuerdo con los términos de este documento.
-                        Sin embargo, esta Política de Privacidad puede cambiar sin previo aviso por lo que le recomendamos revisar estos términos después de cada actualización para asegurarse que está de acuerdo con estos potenciales cambios.
+                        La presente Política de Privacidad establece los términos en que Desit SA usa y protege la información proporcionada por los usuarios al utilizar Docta Pánico. Desit SA está comprometido con la seguridad de los datos de sus usuarios.
+                        Esta Política de Privacidad puede actualizarse. Le recomendamos revisar estos términos después de cada actualización de la aplicación.
                     </Text>
                     <Text style={styles.textTitle}>
 
                         Información recogida
                     </Text>
                     <Text style={styles.politicText}>
-                        Desit SA no recoge información guardada en la aplicación ni tampoco recoge información sobre el uso de la misma, toda la información introducida por parte del usuario queda almacenada de manera local en el dispositivo y no es enviada ni a Desit SA ni a un tercero por parte de Desit SA.
-
+                        Durante el registro y uso de la aplicación, se recopilan y procesan los siguientes datos: código del barrio, número de cuenta, nombre y apellido, referencia de la propiedad, teléfono de contacto, código de licencia y tokens de autenticación necesarios para el funcionamiento del servicio.
+                        Parte de esta información se almacena localmente en su dispositivo y parte se transmite al servidor de Desit SA para gestionar la licencia, validar el acceso y procesar eventos de emergencia.
+                        La aplicación también puede registrar información técnica anónima sobre errores de funcionamiento, con el fin de mejorar la estabilidad del servicio.
                     </Text>
                     <Text style={styles.textTitle}>
 
                         Uso de la información recogida
                     </Text>
                     <Text style={styles.politicText}>
-
-                        Desit SA no recoge información de la aplicación ni de su uso, por lo que no procesamos ningún tipo de información personal.
+                        Los datos personales se utilizan exclusivamente para: registrar y validar la licencia de uso, permitir el envío de eventos de pánico a la central de monitoreo del barrio, administrar la cuenta del usuario y brindar soporte técnico del servicio.
+                        Desit SA no utiliza estos datos con fines publicitarios ni los comercializa.
                     </Text>
                     <Text style={styles.textTitle}>
-                        Divulgación a Terceros
+                        Divulgación a terceros
 
                     </Text>
                     <Text style={styles.politicText}>
-
-                        Desit Pánico no comparte información sobre la aplicación con terceros ni tampoco hacemos uso de enlaces hacia terceros dentro de la aplicación.
+                        Los datos se almacenan en los servidores de Desit SA y no se comparten con terceros ajenos al servicio de monitoreo contratado por el organismo del barrio, salvo obligación legal.
+                        Para el monitoreo de errores técnicos, la aplicación puede utilizar servicios de diagnóstico que reciben información técnica del dispositivo y del error, sin incluir datos personales del usuario en los reportes enviados.
                     </Text>
                     <Text style={styles.textTitle}>
 
                         Control de su información personal
                     </Text>
                     <Text style={styles.politicText}>
-
-                        Toda la información que se ingrese a la aplicación queda almacenada de manera local, como así también en el servidor de Desit con el fin de generar y resguardar la licencia de uso de la app. Los números de teléfonos o textos ingresados sólo serán resguardados a tal fin y bajo ningún concepto serán remitidos a ningún otro destino o empresa mediante Desit SA. El usuario acepta estas condiciones al realizar la configuración de la aplicación en su smartphone.
+                        Usted puede solicitar la eliminación de su licencia y datos asociados desde la sección Sistema de la aplicación, lo que eliminará su cuenta en el servidor y los datos guardados en el dispositivo.
+                        Los números de teléfono y demás datos ingresados solo se utilizan para el funcionamiento del sistema de alertas y la gestión de la licencia. El usuario acepta estas condiciones al realizar la configuración de la aplicación en su smartphone.
                     </Text>
                     <Text style={styles.textTitle}>
                         Desit SA Se reserva el derecho de cambiar los términos de la presente Política de Privacidad en cualquier momento

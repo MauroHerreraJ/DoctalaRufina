@@ -30,7 +30,6 @@ function Configuration() {
                     setNumeroCuenta(storedNumeroCuenta);
                 }
             } catch (error) {
-                console.error("Error al cargar los datos:", error);
             }
         };
         loadData();
@@ -110,7 +109,6 @@ function Configuration() {
                 return true;
             } catch (accountError) {
                 setIsValidating(false);
-                console.error("Error validando número de cuenta:", accountError);
                 
                 if (accountError.response) {
                     // El servidor respondió con un error
@@ -128,7 +126,6 @@ function Configuration() {
             }
         } catch (error) {
             setIsValidating(false);
-            console.error("Error validando datos:", error);
             
             if (error.response) {
                 // El servidor respondió con un error
